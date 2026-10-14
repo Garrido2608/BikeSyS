@@ -34,11 +34,9 @@ namespace ApiBikeSyS.Repositories.Implementation
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<Usuario?> ObtenerPorEmailYClave(string email, string clave)
+        public async Task<bool> HayUsuarios()
         {
-            return await _context.Usuario
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email == email && u.Clave == clave && u.Activo);
+            return await _context.Usuario.AnyAsync();
         }
 
         public async Task<Usuario> Crear(Usuario usuario)

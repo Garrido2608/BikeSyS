@@ -8,6 +8,7 @@ namespace ApiBikeSyS.Services.Interfaces
         Task<UsuarioDTO?> ObtenerPorId(int id);
         Task<UsuarioDTO> Registrar(CrearUsuarioDTO dto);
         Task<UsuarioDTO?> Login(string email, string clave);
+        Task<bool> HayUsuarios();
         Task<bool> Actualizar(int id, ActualizarUsuarioDTO dto);
         Task<bool> Eliminar(int id);
     }

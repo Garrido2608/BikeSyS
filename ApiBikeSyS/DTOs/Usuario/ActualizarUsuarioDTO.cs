@@ -9,9 +9,9 @@ namespace ApiBikeSyS.DTOs.Usuario
         [StringLength(150)]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La clave es obligatoria")]
-        [StringLength(255)]
-        public string Clave { get; set; } = string.Empty;
+        // Opcional: si no se envía, la clave actual no cambia.
+        [StringLength(255, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 255 caracteres")]
+        public string? Clave { get; set; }
 
         public bool Activo { get; set; } = true;
     }

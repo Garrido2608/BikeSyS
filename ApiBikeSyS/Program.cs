@@ -1,9 +1,11 @@
 using ApiBikeSyS.Data;
+using ApiBikeSyS.Models;
 using ApiBikeSyS.Repositories.Implementation;
 using ApiBikeSyS.Repositories.Interfaces;
 using ApiBikeSyS.Services.Implementation;
 using ApiBikeSyS.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -86,6 +88,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(Program));
 
 // 7. Inyección de Dependencias (Las 15 entidades de BikeSys)
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 

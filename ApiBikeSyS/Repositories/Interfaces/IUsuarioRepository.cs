@@ -7,7 +7,7 @@ namespace ApiBikeSyS.Repositories.Interfaces
         Task<List<Usuario>> ObtenerTodos();
         Task<Usuario?> ObtenerPorId(int id);
         Task<Usuario?> ObtenerPorEmail(string email);
-        Task<Usuario?> ObtenerPorEmailYClave(string email, string clave);
+        Task<bool> HayUsuarios();
         Task<Usuario> Crear(Usuario usuario);
         Task<bool> Actualizar(Usuario usuario);
         Task<bool> Eliminar(Usuario usuario);

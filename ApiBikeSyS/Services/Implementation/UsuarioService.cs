@@ -3,6 +3,9 @@ using ApiBikeSyS.Models;
 using ApiBikeSyS.Repositories.Interfaces;
 using ApiBikeSyS.Services.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ApiBikeSyS.Services.Implementation
 {
@@ -10,11 +13,17 @@ namespace ApiBikeSyS.Services.Implementation
     {
         private readonly IUsuarioRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IPasswordHasher<Usuario> _hasher;
 
-        public UsuarioService(IUsuarioRepository repository, IMapper mapper)
+        // Los hashes de ASP.NET Core Identity (formato V3) siempre empiezan con este prefijo.
+        // Lo que no lo tenga es una clave guardada en texto plano por la versión anterior.
+        private const string PrefijoHash = "AQAAAA";
+
+        public UsuarioService(IUsuarioRepository repository, IMapper mapper, IPasswordHasher<Usuario> hasher)
         {
             _repository = repository;
             _mapper = mapper;
+            _hasher = hasher;
         }
 
         public async Task<List<UsuarioDTO>> ObtenerTodos()
@@ -39,6 +48,7 @@ namespace ApiBikeSyS.Services.Implementation
             }
 
             var usuario = _mapper.Map<Usuario>(dto);
+            usuario.Clave = _hasher.HashPassword(usuario, dto.Clave);
             usuario.Activo = true;
 
             var creado = await _repository.Crear(usuario);
@@ -47,9 +57,37 @@ namespace ApiBikeSyS.Services.Implementation
 
         public async Task<UsuarioDTO?> Login(string email, string clave)
         {
-            var usuario = await _repository.ObtenerPorEmailYClave(email, clave);
-            if (usuario == null) return null;
+            var usuario = await _repository.ObtenerPorEmail(email);
+            if (usuario == null || !usuario.Activo) return null;
+
+            var rehashear = false;
+            if (usuario.Clave.StartsWith(PrefijoHash, StringComparison.Ordinal))
+            {
+                var resultado = _hasher.VerifyHashedPassword(usuario, usuario.Clave, clave);
+                if (resultado == PasswordVerificationResult.Failed) return null;
+                rehashear = resultado == PasswordVerificationResult.SuccessRehashNeeded;
+            }
+            else
+            {
+                // Clave legada en texto plano: comparar en tiempo constante y migrarla al hash.
+                var guardada = Encoding.UTF8.GetBytes(usuario.Clave);
+                var ingresada = Encoding.UTF8.GetBytes(clave);
+                if (!CryptographicOperations.FixedTimeEquals(guardada, ingresada)) return null;
+                rehashear = true;
+            }
+
+            if (rehashear)
+            {
+                usuario.Clave = _hasher.HashPassword(usuario, clave);
+                await _repository.Actualizar(usuario);
+            }
+
             return _mapper.Map<UsuarioDTO>(usuario);
+        }
+
+        public async Task<bool> HayUsuarios()
+        {
+            return await _repository.HayUsuarios();
         }
 
         public async Task<bool> Actualizar(int id, ActualizarUsuarioDTO dto)
@@ -64,6 +102,10 @@ namespace ApiBikeSyS.Services.Implementation
             }
 
             _mapper.Map(dto, usuario);
+            if (!string.IsNullOrWhiteSpace(dto.Clave))
+            {
+                usuario.Clave = _hasher.HashPassword(usuario, dto.Clave);
+            }
             return await _repository.Actualizar(usuario);
         }
 

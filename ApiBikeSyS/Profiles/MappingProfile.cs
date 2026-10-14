@@ -64,8 +64,11 @@ namespace ApiBikeSyS.Profiles
 
             //  Usuario
             CreateMap<Usuario, UsuarioDTO>();
-            CreateMap<CrearUsuarioDTO, Usuario>();
-            CreateMap<ActualizarUsuarioDTO, Usuario>();
+            // La clave nunca se copia tal cual: el servicio la hashea.
+            CreateMap<CrearUsuarioDTO, Usuario>()
+                .ForMember(d => d.Clave, o => o.Ignore());
+            CreateMap<ActualizarUsuarioDTO, Usuario>()
+                .ForMember(d => d.Clave, o => o.Ignore());
 
             //  Cliente
             CreateMap<Cliente, ClienteDTO>();

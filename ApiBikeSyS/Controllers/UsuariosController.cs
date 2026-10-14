@@ -39,9 +39,16 @@ namespace ApiBikeSyS.Controllers
             return Ok(usuario);
         }
 
+        // Bootstrap: el primer usuario se crea sin token; a partir de ahí hace falta estar autenticado.
+        [AllowAnonymous]
         [HttpPost("registrar")]
         public async Task<ActionResult> Registrar(CrearUsuarioDTO dto)
         {
+            if (await _service.HayUsuarios() && User.Identity?.IsAuthenticated != true)
+            {
+                return Unauthorized("Solo un usuario autenticado puede registrar nuevos usuarios.");
+            }
+
             try
             {
                 var usuario = await _service.Registrar(dto);
@@ -76,7 +83,7 @@ namespace ApiBikeSyS.Controllers
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(2),
+                expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: credentials);
 
             return Ok(new TokenResponseDTO
