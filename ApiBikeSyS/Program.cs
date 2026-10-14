@@ -43,6 +43,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Clave JWT: NO va en el repositorio. Desarrollo: User Secrets. Produccion: variable de entorno Jwt__Key.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Falta Jwt:Key o tiene menos de 32 bytes. Configurala con: dotnet user-secrets set \"Jwt:Key\" \"<clave-aleatoria-de-32+-caracteres>\"");
+}
+
 // 3. Configuración de Autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -55,7 +63,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 

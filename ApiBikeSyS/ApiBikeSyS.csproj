@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>apibikesys-7c2f1d9e-4b3a-4f60-9a58-2d6e1b0c8f31</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
