@@ -11,6 +11,7 @@ namespace ApiBikeSyS.DTOs.RepuestoUsado
         public int IdRepuesto { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a cero")]
         public int Cantidad { get; set; }
 
         [Required]
