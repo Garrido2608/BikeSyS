@@ -16,7 +16,7 @@ using ApiBikeSyS.DTOs.Usuario;
 using ApiBikeSyS.Models;
 using AutoMapper;
 
-namespace ApiBikeSyS.Profiles
+namespace ApiBikeSyS.Mappings
 {
     public class MappingProfile : Profile
     {
