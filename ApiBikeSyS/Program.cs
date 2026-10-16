@@ -1,4 +1,5 @@
 using ApiBikeSyS.Data;
+using ApiBikeSyS.Mappings;
 using ApiBikeSyS.Repositories.Implementation;
 using ApiBikeSyS.Repositories.Interfaces;
 using ApiBikeSyS.Services.Implementation;
@@ -75,7 +76,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSQL")));
 
 // 6. Configuración de AutoMapper
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // 7. Inyección de Dependencias (Las 15 entidades de BikeSys)
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
