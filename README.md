@@ -27,6 +27,8 @@ Repuestos usados: la cantidad tiene que ser mayor a cero. Antes aceptaba número
 
 Mapeo: el perfil de AutoMapper pasó a la carpeta `Mappings`.
 
+Clientes: la respuesta ahora incluye DNI, calle, número y localidad, que antes no se devolvían. Sin eso, una aplicación que editara un cliente no podía reenviar esos datos y los perdía.
+
 ## Pruebas
 
 Se probó a mano contra una base de prueba y todos los casos dieron el resultado esperado. No hay tests automáticos.
