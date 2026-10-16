@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Carga y Administración | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        requireAdmin();
+        renderLayout('Centro de Carga y Administración (Solo Admin)');
+    </script>
+
+    <div class="welcome">
+        <h2>⚙️ Panel de Carga de Catálogos y Usuarios</h2>
+        <p>Sección exclusiva para Administradores. Seleccioná qué catálogo deseás administrar.</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="cambiarTab('usuarios', this)">👤 Usuarios del Sistema</button>
+        <button class="tab-btn" onclick="cambiarTab('marcas', this)">🏷️ Marcas</button>
+        <button class="tab-btn" onclick="cambiarTab('modelos', this)">🚲 Modelos</button>
+        <button class="tab-btn" onclick="cambiarTab('ruedas', this)">⭕ Tipos de Rueda</button>
+        <button class="tab-btn" onclick="cambiarTab('servicios', this)">🛠️ Tipos de Servicio</button>
+        <button class="tab-btn" onclick="cambiarTab('estados', this)">📌 Estados de Orden</button>
+        <button class="tab-btn" onclick="cambiarTab('localidades', this)">📍 Localidades</button>
+    </div>
+
+    <div id="mensajeGlobal" class="login-error"></div>
+
+    <div class="grid2">
+        <!-- Columna Formulario de Alta -->
+        <div class="panel">
+            <h3 id="tituloForm">Registrar Nuevo Usuario</h3>
+            <form id="formCarga">
+                <div id="camposDinamicos" class="form-grid"></div>
+                <div id="errorCarga" class="login-error"></div>
+                <div class="form-actions">
+                    <button type="submit" class="btn primary" id="btnGuardarCarga">
+                        + Guardar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Columna Tabla -->
+        <div class="panel table-panel">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--line)">
+                <b id="tituloTabla">Registros Actuales</b>
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead id="theadCarga"></thead>
+                    <tbody id="tbodyCarga"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tabActual = 'usuarios';
+        let listaActual = [];
+        let provinciasCache = [];
+
+        function cambiarTab(nuevaTab, btnEl) {
+            tabActual = nuevaTab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            document.getElementById('formCarga').reset();
+            document.getElementById('errorCarga').textContent = '';
+            renderizarConfiguracionTab();
+        }
+
+        async function fetchSeguro(urlPlural, urlSingular) {
+            try {
+                return await apiFetch(urlPlural);
+            } catch {
+                return await apiFetch(urlSingular);
+            }
+        }
+
+        async function renderizarConfiguracionTab() {
+            const contenedor = document.getElementById('camposDinamicos');
+            const tituloForm = document.getElementById('tituloForm');
+            const thead = document.getElementById('theadCarga');
+            const tbody = document.getElementById('tbodyCarga');
+
+            document.getElementById('mensajeGlobal').textContent = '';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">Cargando datos...</td></tr>';
+
+            try {
+                if (tabActual === 'usuarios') {
+                    tituloForm.textContent = 'Registrar Nuevo Usuario';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Email del Nuevo Usuario *</label>
+                            <input class="input" id="cEmail" type="email" required placeholder="usuario@bikesys.com">
+                        </div>
+                        <div class="field full">
+                            <label>Contraseña *</label>
+                            <input class="input" id="cClave" type="password" required placeholder="Asignar contraseña">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Email</th><th>Estado</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/Usuarios', '/Usuario');
+                    tbody.innerHTML = listaActual.map(u => {
+                        const estaActivo = u.activo !== false;
+                        const badge = estaActivo
+                            ? '<span class="badge success">Activo</span>'
+                            : '<span class="badge danger">Inactivo</span>';
+
+                        const btnEstado = estaActivo
+                            ? `<button class="btn small light" onclick="cambiarEstadoUsuario(${u.id}, false)">🚫 Desactivar</button>`
+                            : `<button class="btn small success" onclick="cambiarEstadoUsuario(${u.id}, true)">✔ Activar</button>`;
+
+                        return `
+                            <tr>
+                                <td>#${u.id}</td>
+                                <td><b>${esc(u.email)}</b></td>
+                                <td>${badge}</td>
+                                <td>
+                                    ${btnEstado}
+                                    <button class="btn small danger" onclick="eliminarItem('/Usuarios/${u.id}', '/Usuario/${u.id}')">Eliminar</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="4" class="empty">Sin usuarios registrados.</td></tr>';
+                }
+
+                else if (tabActual === 'marcas') {
+                    tituloForm.textContent = 'Cargar Marca';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Nombre de la Marca *</label>
+                            <input class="input" id="cNombre" required placeholder="Ej. Venzo, Trek, Vairo">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Marca</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/Marcas', '/Marca');
+                    tbody.innerHTML = listaActual.map(x => `
+                        <tr>
+                            <td>#${x.id}</td>
+                            <td><b>${esc(x.nombre)}</b></td>
+                            <td><button class="btn small danger" onclick="eliminarItem('/Marcas/${x.id}', '/Marca/${x.id}')">Eliminar</button></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="empty">Sin marcas registradas.</td></tr>';
+                }
+
+                else if (tabActual === 'modelos') {
+                    tituloForm.textContent = 'Cargar Modelo';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Tipo de Modelo *</label>
+                            <input class="input" id="cTipoModelo" required placeholder="Ej. Mountain Bike (MTB), BMX, Ruta">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Tipo de Modelo</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/Modelos', '/Modelo');
+                    tbody.innerHTML = listaActual.map(x => `
+                        <tr>
+                            <td>#${x.id}</td>
+                            <td><b>${esc(x.tipoModelo)}</b></td>
+                            <td><button class="btn small danger" onclick="eliminarItem('/Modelos/${x.id}', '/Modelo/${x.id}')">Eliminar</button></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="empty">Sin modelos registrados.</td></tr>';
+                }
+
+                else if (tabActual === 'ruedas') {
+                    tituloForm.textContent = 'Cargar Tipo de Rueda / Rodado';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Nombre / Rodado *</label>
+                            <input class="input" id="cNombre" required placeholder="Ej. Rodado 29, Rodado 26">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Rodado</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/TiposRueda', '/TipoRueda');
+                    tbody.innerHTML = listaActual.map(x => `
+                        <tr>
+                            <td>#${x.id}</td>
+                            <td><b>${esc(x.nombre)}</b></td>
+                            <td><button class="btn small danger" onclick="eliminarItem('/TiposRueda/${x.id}', '/TipoRueda/${x.id}')">Eliminar</button></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="empty">Sin rodados registrados.</td></tr>';
+                }
+
+                else if (tabActual === 'servicios') {
+                    tituloForm.textContent = 'Cargar Tipo de Servicio (Mano de Obra)';
+                    contenedor.innerHTML = `
+                        <div class="field">
+                            <label>Nombre del Servicio *</label>
+                            <input class="input" id="cNombre" required placeholder="Ej. Servi Completo">
+                        </div>
+                        <div class="field">
+                            <label>Precio Base ($) *</label>
+                            <input class="input" id="cPrecio" type="number" min="0" step="0.01" required placeholder="35000">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Servicio</th><th>Precio</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/TiposServicio', '/TipoServicio');
+                    tbody.innerHTML = listaActual.map(x => {
+                        const nom = x.nombre || x.Nombre || '';
+                        const pre = x.precio ?? x.Precio ?? 0;
+                        return `
+                            <tr>
+                                <td>#${x.id}</td>
+                                <td><b>${esc(nom)}</b></td>
+                                <td>${money(pre)}</td>
+                                <td><button class="btn small danger" onclick="eliminarItem('/TiposServicio/${x.id}', '/TipoServicio/${x.id}')">Eliminar</button></td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="4" class="empty">Sin tipos de servicio cargados.</td></tr>';
+                }
+
+                else if (tabActual === 'estados') {
+                    tituloForm.textContent = 'Estados de Orden (1 = Recibido, 2 = Finalizado)';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Nombre del Estado *</label>
+                            <input class="input" id="cNombre" required placeholder="Ej. Recibido, Finalizado">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Estado</th><th>Acciones</th></tr>';
+                    listaActual = await fetchSeguro('/Estados', '/Estado');
+                    tbody.innerHTML = listaActual.map(x => `
+                        <tr>
+                            <td>#${x.id}</td>
+                            <td><b>${esc(x.nombre)}</b></td>
+                            <td><button class="btn small danger" onclick="eliminarItem('/Estados/${x.id}', '/Estado/${x.id}')">Eliminar</button></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="empty">Sin estados cargados.</td></tr>';
+                }
+
+                else if (tabActual === 'localidades') {
+                    provinciasCache = await fetchSeguro('/Provincias', '/Provincia').catch(() => []);
+                    listaActual = await fetchSeguro('/Localidades', '/Localidad').catch(() => []);
+
+                    const cordoba = provinciasCache.find(p =>
+                        p.nombre.toLowerCase().includes('córdoba') || p.nombre.toLowerCase().includes('cordoba')
+                    );
+                    const idDefault = cordoba ? cordoba.id : (provinciasCache[0]?.id || '');
+
+                    tituloForm.textContent = 'Cargar Nueva Localidad';
+                    contenedor.innerHTML = `
+                        <div class="field full">
+                            <label>Provincia *</label>
+                            <select class="select" id="cIdProvincia" required>
+                                ${provinciasCache.map(p => `
+                                    <option value="${p.id}" ${p.id === idDefault ? 'selected' : ''}>
+                                        ${esc(p.nombre)}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="field full">
+                            <label>Nombre de la Localidad *</label>
+                            <input class="input" id="cNombre" required placeholder="Ej. Villa Allende, La Calera, Carlos Paz">
+                        </div>
+                    `;
+                    thead.innerHTML = '<tr><th>ID</th><th>Localidad</th><th>Provincia</th><th>Acciones</th></tr>';
+                    tbody.innerHTML = listaActual.map(l => {
+                        const p = provinciasCache.find(x => x.id === l.idProvincia);
+                        return `
+                            <tr>
+                                <td>#${l.id}</td>
+                                <td><b>${esc(l.nombre)}</b></td>
+                                <td>${esc(p ? p.nombre : 'Prov #' + l.idProvincia)}</td>
+                                <td><button class="btn small danger" onclick="eliminarItem('/Localidades/${l.id}', '/Localidad/${l.id}')">Eliminar</button></td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="4" class="empty">Sin localidades registradas.</td></tr>';
+                }
+            } catch (error) {
+                document.getElementById('mensajeGlobal').textContent = `Error al consultar la API: ${error.message}`;
+            }
+        }
+
+        async function cambiarEstadoUsuario(id, nuevoEstadoActivo) {
+            const u = listaActual.find(x => x.id === id);
+            if (!u) return;
+
+            try {
+                await apiFetch(`/Usuarios/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        email: u.email,
+                        activo: nuevoEstadoActivo
+                    })
+                });
+                await renderizarConfiguracionTab();
+            } catch (error) {
+                document.getElementById('errorCarga').textContent = error.message;
+            }
+        }
+
+        document.getElementById('formCarga').onsubmit = async (e) => {
+            e.preventDefault();
+            const err = document.getElementById('errorCarga');
+            err.textContent = '';
+
+            try {
+                if (tabActual === 'usuarios') {
+                    const email = document.getElementById('cEmail').value.trim();
+                    const clave = document.getElementById('cClave').value;
+                    try {
+                        await apiFetch('/Usuarios/registrar', {
+                            method: 'POST',
+                            body: JSON.stringify({ email, clave })
+                        });
+                    } catch {
+                        await apiFetch('/Usuarios', {
+                            method: 'POST',
+                            body: JSON.stringify({ email, clave })
+                        });
+                    }
+                }
+                else if (tabActual === 'marcas') {
+                    await apiFetch('/Marcas', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }).catch(() => apiFetch('/Marca', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }));
+                }
+                else if (tabActual === 'modelos') {
+                    await apiFetch('/Modelos', {
+                        method: 'POST',
+                        body: JSON.stringify({ tipoModelo: document.getElementById('cTipoModelo').value.trim() })
+                    }).catch(() => apiFetch('/Modelo', {
+                        method: 'POST',
+                        body: JSON.stringify({ tipoModelo: document.getElementById('cTipoModelo').value.trim() })
+                    }));
+                }
+                else if (tabActual === 'ruedas') {
+                    await apiFetch('/TiposRueda', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }).catch(() => apiFetch('/TipoRueda', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }));
+                }
+                else if (tabActual === 'servicios') {
+                    await apiFetch('/TiposServicio', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            nombre: document.getElementById('cNombre').value.trim(),
+                            precio: Number(document.getElementById('cPrecio').value)
+                        })
+                    }).catch(() => apiFetch('/TipoServicio', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            nombre: document.getElementById('cNombre').value.trim(),
+                            precio: Number(document.getElementById('cPrecio').value)
+                        })
+                    }));
+                }
+                else if (tabActual === 'estados') {
+                    await apiFetch('/Estados', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }).catch(() => apiFetch('/Estado', {
+                        method: 'POST',
+                        body: JSON.stringify({ nombre: document.getElementById('cNombre').value.trim() })
+                    }));
+                }
+                else if (tabActual === 'localidades') {
+                    await apiFetch('/Localidades', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            nombre: document.getElementById('cNombre').value.trim(),
+                            idProvincia: Number(document.getElementById('cIdProvincia').value)
+                        })
+                    }).catch(() => apiFetch('/Localidad', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            nombre: document.getElementById('cNombre').value.trim(),
+                            idProvincia: Number(document.getElementById('cIdProvincia').value)
+                        })
+                    }));
+                }
+
+                document.getElementById('formCarga').reset();
+                await renderizarConfiguracionTab();
+            } catch (ex) {
+                err.textContent = ex.message;
+            }
+        };
+
+        async function eliminarItem(urlPlural, urlSingular) {
+            if (!confirm('¿Estás seguro de que deseás eliminar este registro?')) return;
+            try {
+                await apiFetch(urlPlural, { method: 'DELETE' });
+            } catch {
+                await apiFetch(urlSingular, { method: 'DELETE' });
+            }
+            await renderizarConfiguracionTab();
+        }
+
+        renderizarConfiguracionTab();
+    </script>
+    <script>document.write(endLayout());</script>
+</body>
+</html>

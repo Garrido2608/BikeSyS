@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Repuestos | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>renderLayout('Inventario de Repuestos');</script>
+
+    <div class="toolbar">
+        <div>
+            <b>Catálogo y Stock de Repuestos</b>
+            <div class="helper">El stock se descuenta automáticamente cuando se asigna un repuesto en una orden de taller.</div>
+        </div>
+        <div class="left">
+            <input class="input" id="buscar" placeholder="Buscar repuesto..." style="width:240px">
+        </div>
+        <div class="right">
+            <button class="btn primary" onclick="nuevo()">+ Nuevo Repuesto</button>
+        </div>
+    </div>
+
+    <div id="mensaje" class="login-error"></div>
+
+    <div class="panel table-panel">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Repuesto</th>
+                        <th>Precio Unitario</th>
+                        <th>Stock Disponible</th>
+                        <th>Estado Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-card" style="width:min(520px,100%)">
+            <div class="modal-head">
+                <h3 id="mt">Nuevo Repuesto</h3>
+                <button class="close" onclick="closeModal('modal')">×</button>
+            </div>
+            <form id="form">
+                <input type="hidden" id="id">
+                <div class="form-grid">
+                    <div class="field full">
+                        <label>Nombre del Repuesto *</label>
+                        <input class="input" id="nombre" required maxlength="100">
+                    </div>
+                    <div class="field">
+                        <label>Precio ($) *</label>
+                        <input class="input" id="precio" type="number" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="field">
+                        <label>Stock Actual *</label>
+                        <input class="input" id="stock" type="number" min="0" step="1" required>
+                    </div>
+                </div>
+                <div id="formError" class="login-error"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn light" onclick="closeModal('modal')">Cancelar</button>
+                    <button type="submit" class="btn primary" id="saveBtn">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let items = [];
+
+        function msg(t) {
+            document.getElementById('mensaje').textContent = t || '';
+        }
+
+        async function cargar() {
+            try {
+                items = await apiFetch('/Repuestos');
+                render();
+                msg('');
+            } catch (e) {
+                msg(e.message);
+            }
+        }
+
+        function render() {
+            const q = document.getElementById('buscar').value.toLowerCase();
+            const filtrados = items.filter(p => (p.nombre || '').toLowerCase().includes(q));
+
+            document.getElementById('tbody').innerHTML = filtrados.map(p => {
+                const badge = p.stock <= 0
+                    ? '<span class="badge danger">Sin Stock</span>'
+                    : p.stock <= 5
+                        ? '<span class="badge warning">Stock Bajo</span>'
+                        : '<span class="badge success">Disponible</span>';
+
+                return `
+                    <tr>
+                        <td>#${p.id}</td>
+                        <td><b>${esc(p.nombre)}</b></td>
+                        <td>${money(p.precio)}</td>
+                        <td><b>${p.stock}</b> u.</td>
+                        <td>${badge}</td>
+                        <td>
+                            <button class="btn small" onclick="editar(${p.id})">Editar</button>
+                            <button class="btn small danger" onclick="eliminar(${p.id})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="6" class="empty">No hay repuestos registrados.</td></tr>';
+        }
+
+        function nuevo() {
+            document.getElementById('form').reset();
+            document.getElementById('id').value = '';
+            document.getElementById('formError').textContent = '';
+            document.getElementById('mt').textContent = 'Nuevo Repuesto';
+            openModal('modal');
+        }
+
+        function editar(i) {
+            const p = items.find(x => x.id === i);
+            if (!p) return;
+            document.getElementById('id').value = p.id;
+            document.getElementById('nombre').value = p.nombre;
+            document.getElementById('precio').value = p.precio;
+            document.getElementById('stock').value = p.stock;
+            document.getElementById('formError').textContent = '';
+            document.getElementById('mt').textContent = 'Editar Repuesto';
+            openModal('modal');
+        }
+
+        async function eliminar(i) {
+            if (!confirm('¿Eliminar este repuesto?')) return;
+            try {
+                await apiFetch(`/Repuestos/${i}`, { method: 'DELETE' });
+                await cargar();
+            } catch (e) {
+                msg(e.message);
+            }
+        }
+
+        document.getElementById('form').onsubmit = async (e) => {
+            e.preventDefault();
+            const b = document.getElementById('saveBtn');
+            const err = document.getElementById('formError');
+            b.disabled = true;
+            err.textContent = '';
+
+            const idVal = document.getElementById('id').value;
+            const dto = {
+                nombre: document.getElementById('nombre').value.trim(),
+                precio: Number(document.getElementById('precio').value),
+                stock: Number(document.getElementById('stock').value)
+            };
+
+            try {
+                if (idVal) {
+                    await apiFetch(`/Repuestos/${idVal}`, { method: 'PUT', body: JSON.stringify(dto) });
+                } else {
+                    await apiFetch('/Repuestos', { method: 'POST', body: JSON.stringify(dto) });
+                }
+                closeModal('modal');
+                await cargar();
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                b.disabled = false;
+            }
+        };
+
+        document.getElementById('buscar').oninput = render;
+        cargar();
+    </script>
+    <script>document.write(endLayout());</script>
+</body>
+</html>

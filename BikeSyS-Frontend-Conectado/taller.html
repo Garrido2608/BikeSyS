@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Taller y Órdenes | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>renderLayout('Taller y Órdenes de Servicio');</script>
+
+    <div class="toolbar">
+        <div>
+            <b>Gestión de Órdenes de Servicio</b>
+            <div class="helper">Toda nueva orden ingresa automáticamente en estado "Ingresado / Recibido" y podés finalizarla desde la tabla.</div>
+        </div>
+        <div class="left">
+            <input class="input" id="buscar" placeholder="Buscar por cliente, motivo o N°..." style="width:250px">
+        </div>
+        <div class="right">
+            <button class="btn primary" onclick="nuevaOrden()">+ Nueva Orden de Servicio</button>
+        </div>
+    </div>
+
+    <div id="mensaje" class="login-error"></div>
+
+    <div class="panel table-panel">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Orden</th>
+                        <th>Cliente</th>
+                        <th>Bicicleta</th>
+                        <th>Fecha Recepción</th>
+                        <th>Motivo / Diagnóstico</th>
+                        <th>Estado</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Orden Completa -->
+    <div class="modal" id="modalOrden">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="mtOrden">Nueva Orden de Servicio</h3>
+                <button class="close" onclick="closeModal('modalOrden')">×</button>
+            </div>
+            <form id="formOrden">
+                <input type="hidden" id="ordenId">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>1. Cliente *</label>
+                        <select class="select" id="selClienteOrden" required onchange="filtrarBicicletasPorCliente()">
+                            <option value="">-- Seleccionar Cliente --</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>2. Bicicleta del Cliente *</label>
+                        <select class="select" id="idBicicleta" required>
+                            <option value="">-- Primero elegí un cliente --</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Fecha de Recepción *</label>
+                        <input class="input" id="fechaRecepcion" type="date" required>
+                    </div>
+                    <div class="field">
+                        <label>Motivo / Trabajo solicitado *</label>
+                        <input class="input" id="motivo" maxlength="255" required placeholder="Ej. Servi completo y centrado">
+                    </div>
+                </div>
+
+                <!-- Sección Servicios / Mano de Obra -->
+                <div class="sub-box">
+                    <h4>🛠️ Servicios / Mano de Obra a realizar</h4>
+                    <div class="inline-add">
+                        <div>
+                            <label style="font-size:11px;color:#666">Tipo de Servicio</label>
+                            <select class="select" id="selTipoServicio"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;color:#666">Cantidad</label>
+                            <input class="input" id="cantServicio" type="number" min="1" value="1">
+                        </div>
+                        <button type="button" class="btn small primary" onclick="agregarServicioTemp()">+ Agregar Servicio</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Cant.</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyServiciosTemp"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sección Repuestos Usados -->
+                <div class="sub-box">
+                    <h4>⚙️ Repuestos Utilizados (Descuenta Stock)</h4>
+                    <div class="inline-add">
+                        <div>
+                            <label style="font-size:11px;color:#666">Repuesto en Stock</label>
+                            <select class="select" id="selRepuesto"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;color:#666">Cantidad</label>
+                            <input class="input" id="cantRepuesto" type="number" min="1" value="1">
+                        </div>
+                        <button type="button" class="btn small primary" onclick="agregarRepuestoTemp()">+ Agregar Repuesto</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Repuesto</th>
+                                    <th>Cant.</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyRepuestosTemp"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="total-box">
+                    <span>Total General de la Orden (editable si aplica descuento):</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span>$</span>
+                        <input class="input" id="totalGeneral" type="number" min="0" step="0.01" required style="width:150px;font-weight:700">
+                    </div>
+                </div>
+
+                <div id="formError" class="login-error"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn light" onclick="closeModal('modalOrden')">Cancelar</button>
+                    <button type="submit" class="btn primary" id="saveBtn">Guardar Orden Completa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let ordenes = [], bicis = [], clientes = [], marcas = [], modelos = [], ruedas = [];
+        let tiposServicio = [], repuestos = [], estados = [], historiales = [];
+        let serviciosTemp = [];
+        let repuestosTemp = [];
+
+        function msg(t) {
+            document.getElementById('mensaje').textContent = t || '';
+        }
+
+        function badgeEstado(nombre) {
+            const n = (nombre || '').toLowerCase();
+            if (n.includes('finaliz') || n.includes('entregad')) {
+                return `<span class="badge success">${esc(nombre)}</span>`;
+            }
+            return `<span class="badge warning">${esc(nombre || 'Ingresado')}</span>`;
+        }
+
+        async function cargarTiposServicioSeguro() {
+            try {
+                return await apiFetch('/TiposServicio');
+            } catch (err1) {
+                try {
+                    return await apiFetch('/TipoServicio');
+                } catch {
+                    console.error('Error al cargar TiposServicio:', err1);
+                    msg(`Aviso: No se pudieron cargar los Tipos de Servicio (${err1.message}). Verificá MappingProfile.cs en la API.`);
+                    return [];
+                }
+            }
+        }
+
+        async function cargarTodo() {
+            try {
+                msg('');
+                [ordenes, bicis, clientes, marcas, modelos, ruedas, tiposServicio, repuestos, estados, historiales] = await Promise.all([
+                    apiFetch('/OrdenesService'),
+                    apiFetch('/Bicicletas').catch(() => []),
+                    apiFetch('/Clientes').catch(() => []),
+                    apiFetch('/Marcas').catch(() => []),
+                    apiFetch('/Modelos').catch(() => []),
+                    apiFetch('/TiposRueda').catch(() => []),
+                    cargarTiposServicioSeguro(),
+                    apiFetch('/Repuestos').catch(() => []),
+                    apiFetch('/Estados').catch(() => []),
+                    apiFetch('/HistorialesEstado').catch(() => [])
+                ]);
+
+                poblarSelectores();
+                renderizarOrdenes();
+            } catch (error) {
+                msg(error.message);
+            }
+        }
+
+        function describirSoloBici(b) {
+            if (!b) return '-';
+            const mar = marcas.find(m => m.id === b.idMarca)?.nombre || '';
+            const mod = modelos.find(m => m.id === b.idModelo)?.tipoModelo || '';
+            const rue = ruedas.find(r => r.id === b.idTipoRueda)?.nombre || '';
+            return [mar, mod, rue].filter(Boolean).join(' - ') || `Bicicleta #${b.id}`;
+        }
+
+        function obtenerDatosBicicletaYCliente(idBici) {
+            const b = bicis.find(x => x.id === idBici);
+            if (!b) return { cliente: '-', bici: `Bicicleta #${idBici}`, idCliente: '' };
+            const cli = clientes.find(c => c.id === b.idCliente);
+            return {
+                idCliente: b.idCliente,
+                cliente: cli ? `${cli.nombre} ${cli.apellido}` : `Cliente #${b.idCliente}`,
+                bici: `#${b.id} (${describirSoloBici(b)})`
+            };
+        }
+
+        function obtenerEstadoActual(idOrden) {
+            const hists = historiales.filter(h => h.idOrdenService === idOrden);
+            if (!hists.length) {
+                return { idEstado: 1, nombre: estados.find(e => e.id === 1)?.nombre || 'Ingresado' };
+            }
+            const ultimo = hists.reduce((prev, curr) => (curr.id > prev.id ? curr : prev));
+            const est = estados.find(e => e.id === ultimo.idEstado);
+            return {
+                idEstado: ultimo.idEstado,
+                nombre: est ? est.nombre : (ultimo.idEstado === 2 ? 'Finalizado' : 'Ingresado')
+            };
+        }
+
+        function poblarSelectores() {
+            const selCli = document.getElementById('selClienteOrden');
+            selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+                clientes.map(c => `<option value="${c.id}">${esc(c.nombre)} ${esc(c.apellido)} (DNI: ${esc(c.dni || c.DNI || '-')})</option>`).join('');
+
+            document.getElementById('selTipoServicio').innerHTML = tiposServicio.length
+                ? tiposServicio.map(ts => {
+                    const nom = ts.nombre || ts.Nombre || `Servicio #${ts.id}`;
+                    const pre = ts.precio ?? ts.Precio ?? 0;
+                    return `<option value="${ts.id}">${esc(nom)} (${money(pre)})</option>`;
+                }).join('')
+                : '<option value="">-- Sin tipos de servicio cargados --</option>';
+
+            const repConStock = repuestos.filter(r => r.stock > 0);
+            document.getElementById('selRepuesto').innerHTML = repConStock.length
+                ? repConStock.map(r => `<option value="${r.id}">${esc(r.nombre)} (${money(r.precio)} - Stock: ${r.stock})</option>`).join('')
+                : '<option value="">-- Sin repuestos con stock --</option>';
+        }
+
+        function filtrarBicicletasPorCliente(idBiciSeleccionada = null) {
+            const idCli = Number(document.getElementById('selClienteOrden').value);
+            const selBici = document.getElementById('idBicicleta');
+
+            if (!idCli) {
+                selBici.innerHTML = '<option value="">-- Primero elegí un cliente --</option>';
+                return;
+            }
+
+            const bicisDelCliente = bicis.filter(b => b.idCliente === idCli);
+            if (bicisDelCliente.length === 0) {
+                selBici.innerHTML = '<option value="">Este cliente no tiene bicicletas (cárgala en Clientes)</option>';
+                return;
+            }
+
+            selBici.innerHTML = bicisDelCliente.map(b => `
+                <option value="${b.id}" ${b.id === idBiciSeleccionada ? 'selected' : ''}>
+                    #${b.id} — ${esc(describirSoloBici(b))}
+                </option>
+            `).join('');
+        }
+
+        function renderizarOrdenes() {
+            const q = document.getElementById('buscar').value.toLowerCase();
+            const tbody = document.getElementById('tbody');
+
+            const lista = ordenes.slice().reverse().filter(o => {
+                const info = obtenerDatosBicicletaYCliente(o.idBicicleta);
+                const texto = `${o.id} ${info.cliente} ${info.bici} ${o.motivo || ''}`.toLowerCase();
+                return texto.includes(q);
+            });
+
+            if (!lista.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay órdenes de servicio registradas.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(o => {
+                const info = obtenerDatosBicicletaYCliente(o.idBicicleta);
+                const est = obtenerEstadoActual(o.id);
+                const yaFinalizada = est.nombre.toLowerCase().includes('finaliz') || est.idEstado === 2;
+
+                const btnFinalizar = !yaFinalizada
+                    ? `<button class="btn small success" onclick="finalizarOrden(${o.id})">✔ Finalizar</button>`
+                    : '';
+
+                return `
+                    <tr>
+                        <td><b>#${o.id}</b></td>
+                        <td><b>${esc(info.cliente)}</b></td>
+                        <td>${esc(info.bici)}</td>
+                        <td>${fmtDate(o.fechaRecepcion)}</td>
+                        <td>${esc(o.motivo)}</td>
+                        <td>${badgeEstado(est.nombre)}</td>
+                        <td><b>${money(o.totalGeneral)}</b></td>
+                        <td>
+                            ${btnFinalizar}
+                            <button class="btn small" onclick="editarOrden(${o.id})">Detalle / Editar</button>
+                            <button class="btn small danger" onclick="eliminarOrden(${o.id})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function finalizarOrden(idOrden) {
+            if (!confirm(`¿Marcar la Orden #${idOrden} como FINALIZADA?`)) return;
+
+            try {
+                // Buscar el ID del estado "Finalizado" (o usar 2 por defecto)
+                const estFin = estados.find(e => e.nombre.toLowerCase().includes('finaliz'));
+                const idEstadoFinalizado = estFin ? estFin.id : 2;
+
+                await apiFetch('/HistorialesEstado', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        idOrdenService: idOrden,
+                        idEstado: idEstadoFinalizado,
+                        fecha: new Date().toISOString()
+                    })
+                });
+
+                await cargarTodo();
+            } catch (error) {
+                msg(`No se pudo finalizar la orden: ${error.message}`);
+            }
+        }
+
+        function renderizarItemsTemp() {
+            const tbServ = document.getElementById('tbodyServiciosTemp');
+            tbServ.innerHTML = serviciosTemp.length
+                ? serviciosTemp.map((s, idx) => `
+                    <tr>
+                        <td>${esc(s.nombre)}</td>
+                        <td>${s.cantidad}</td>
+                        <td>${money(s.costo)}</td>
+                        <td><b>${money(s.cantidad * s.costo)}</b></td>
+                        <td><button type="button" class="btn small danger" onclick="quitarServicioTemp(${idx})">×</button></td>
+                    </tr>`).join('')
+                : '<tr><td colspan="5" class="empty" style="padding:8px">Sin servicios agregados.</td></tr>';
+
+            const tbRep = document.getElementById('tbodyRepuestosTemp');
+            tbRep.innerHTML = repuestosTemp.length
+                ? repuestosTemp.map((r, idx) => `
+                    <tr>
+                        <td>${esc(r.nombre)}</td>
+                        <td>${r.cantidad}</td>
+                        <td>${money(r.precioUnitario)}</td>
+                        <td><b>${money(r.cantidad * r.precioUnitario)}</b></td>
+                        <td><button type="button" class="btn small danger" onclick="quitarRepuestoTemp(${idx})">×</button></td>
+                    </tr>`).join('')
+                : '<tr><td colspan="5" class="empty" style="padding:8px">Sin repuestos agregados.</td></tr>';
+
+            recalcularTotal();
+        }
+
+        function recalcularTotal() {
+            const subServ = serviciosTemp.reduce((acc, s) => acc + (s.cantidad * s.costo), 0);
+            const subRep = repuestosTemp.reduce((acc, r) => acc + (r.cantidad * r.precioUnitario), 0);
+            document.getElementById('totalGeneral').value = (subServ + subRep).toFixed(2);
+        }
+
+        function agregarServicioTemp() {
+            const idTipo = Number(document.getElementById('selTipoServicio').value);
+            const cant = Number(document.getElementById('cantServicio').value) || 1;
+            const tipo = tiposServicio.find(t => t.id === idTipo);
+            if (!tipo) return;
+
+            serviciosTemp.push({
+                idTipoServicio: tipo.id,
+                nombre: tipo.nombre || tipo.Nombre,
+                cantidad: cant,
+                costo: Number(tipo.precio ?? tipo.Precio ?? 0),
+                guardado: false
+            });
+            renderizarItemsTemp();
+        }
+
+        function quitarServicioTemp(idx) {
+            serviciosTemp.splice(idx, 1);
+            renderizarItemsTemp();
+        }
+
+        function agregarRepuestoTemp() {
+            const idRep = Number(document.getElementById('selRepuesto').value);
+            const cant = Number(document.getElementById('cantRepuesto').value) || 1;
+            const rep = repuestos.find(r => r.id === idRep);
+            if (!rep) return;
+
+            if (cant > rep.stock) {
+                alert(`Stock insuficiente. Disponible de ${rep.nombre}: ${rep.stock}`);
+                return;
+            }
+
+            repuestosTemp.push({
+                idRepuesto: rep.id,
+                nombre: rep.nombre,
+                cantidad: cant,
+                precioUnitario: Number(rep.precio),
+                guardado: false
+            });
+            renderizarItemsTemp();
+        }
+
+        function quitarRepuestoTemp(idx) {
+            repuestosTemp.splice(idx, 1);
+            renderizarItemsTemp();
+        }
+
+        function nuevaOrden() {
+            document.getElementById('formOrden').reset();
+            document.getElementById('ordenId').value = '';
+            document.getElementById('selClienteOrden').value = '';
+            filtrarBicicletasPorCliente();
+            document.getElementById('fechaRecepcion').value = today();
+            document.getElementById('formError').textContent = '';
+            document.getElementById('mtOrden').textContent = 'Nueva Orden de Servicio';
+            serviciosTemp = [];
+            repuestosTemp = [];
+            renderizarItemsTemp();
+            openModal('modalOrden');
+        }
+
+        async function editarOrden(id) {
+            const o = ordenes.find(x => x.id === id);
+            if (!o) return;
+
+            const info = obtenerDatosBicicletaYCliente(o.idBicicleta);
+            document.getElementById('ordenId').value = o.id;
+            document.getElementById('selClienteOrden').value = info.idCliente;
+            filtrarBicicletasPorCliente(o.idBicicleta);
+
+            document.getElementById('fechaRecepcion').value = String(o.fechaRecepcion || '').slice(0, 10);
+            document.getElementById('motivo').value = o.motivo || '';
+
+            const [servsOrden, repsOrden] = await Promise.all([
+                apiFetch(`/Servicios/orden/${o.id}`).catch(() => []),
+                apiFetch(`/RepuestosUsado/orden/${o.id}`).catch(() => [])
+            ]);
+
+            serviciosTemp = servsOrden.map(s => {
+                const ts = tiposServicio.find(t => t.id === s.idTipoServicio);
+                return {
+                    id: s.id,
+                    idTipoServicio: s.idTipoServicio,
+                    nombre: ts ? (ts.nombre || ts.Nombre) : `Servicio #${s.idTipoServicio}`,
+                    cantidad: s.cantidad,
+                    costo: s.costo,
+                    guardado: true
+                };
+            });
+
+            repuestosTemp = repsOrden.map(r => {
+                const rep = repuestos.find(x => x.id === r.idRepuesto);
+                return {
+                    id: r.id,
+                    idRepuesto: r.idRepuesto,
+                    nombre: rep ? rep.nombre : `Repuesto #${r.idRepuesto}`,
+                    cantidad: r.cantidad,
+                    precioUnitario: r.precioUnitario,
+                    guardado: true
+                };
+            });
+
+            renderizarItemsTemp();
+            document.getElementById('totalGeneral').value = o.totalGeneral;
+            document.getElementById('formError').textContent = '';
+            document.getElementById('mtOrden').textContent = `Detalle / Edición de Orden #${o.id}`;
+            openModal('modalOrden');
+        }
+
+        document.getElementById('formOrden').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            const err = document.getElementById('formError');
+            const idBiciVal = Number(document.getElementById('idBicicleta').value);
+
+            if (!idBiciVal) {
+                err.textContent = 'Seleccioná un cliente y una bicicleta válida.';
+                return;
+            }
+
+            btn.disabled = true;
+            err.textContent = '';
+
+            const idOrdenExistente = document.getElementById('ordenId').value;
+            const dtoOrden = {
+                idBicicleta: idBiciVal,
+                fechaRecepcion: new Date(document.getElementById('fechaRecepcion').value + 'T12:00:00').toISOString(),
+                motivo: document.getElementById('motivo').value.trim(),
+                totalGeneral: Number(document.getElementById('totalGeneral').value)
+            };
+
+            try {
+                let ordenIdFinal = Number(idOrdenExistente);
+
+                if (idOrdenExistente) {
+                    await apiFetch(`/OrdenesService/${idOrdenExistente}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(dtoOrden)
+                    });
+                } else {
+                    // Al crear la orden, OrdenServiceService en la API registra automáticamente el Estado 1 (Ingresado)
+                    const creada = await apiFetch('/OrdenesService', {
+                        method: 'POST',
+                        body: JSON.stringify(dtoOrden)
+                    });
+                    ordenIdFinal = creada.id;
+                }
+
+                for (const s of serviciosTemp.filter(x => !x.guardado)) {
+                    await apiFetch('/Servicios', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            idOrdenService: ordenIdFinal,
+                            idTipoServicio: s.idTipoServicio,
+                            cantidad: s.cantidad,
+                            costo: s.costo
+                        })
+                    });
+                }
+
+                for (const r of repuestosTemp.filter(x => !x.guardado)) {
+                    await apiFetch('/RepuestosUsado', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            idOrdenService: ordenIdFinal,
+                            idRepuesto: r.idRepuesto,
+                            cantidad: r.cantidad,
+                            precioUnitario: r.precioUnitario
+                        })
+                    });
+                }
+
+                closeModal('modalOrden');
+                await cargarTodo();
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        async function eliminarOrden(id) {
+            if (!confirm(`¿Eliminar la orden #${id}?`)) return;
+            try {
+                await apiFetch(`/OrdenesService/${id}`, { method: 'DELETE' });
+                await cargarTodo();
+            } catch (error) {
+                msg(error.message);
+            }
+        }
+
+        document.getElementById('buscar').oninput = renderizarOrdenes;
+        cargarTodo();
+    </script>
+    <script>document.write(endLayout());</script>
+</body>
+</html>

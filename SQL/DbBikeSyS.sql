@@ -1,0 +1,125 @@
+USE master
+GO
+
+CREATE DATABASE BikeSys
+GO
+
+USE BikeSys
+GO
+
+CREATE TABLE Provincia (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL
+)
+GO
+
+CREATE TABLE Localidad (
+    Id INT IDENTITY(1,1) PRIMARY KEY, 
+    Nombre VARCHAR(100) NOT NULL,
+    IdProvincia INT NOT NULL
+)
+GO
+
+CREATE TABLE Marca (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL
+)
+GO
+
+CREATE TABLE Modelo (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    TipoModelo VARCHAR(100) NOT NULL
+)
+GO
+
+CREATE TABLE TipoRueda (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL 
+)
+GO
+
+CREATE TABLE Estado (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL
+)
+GO
+
+CREATE TABLE TipoServicio (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Precio DECIMAL(18,2) NOT NULL
+)
+GO
+
+CREATE TABLE Repuesto (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Precio DECIMAL(18,2) NOT NULL,
+    Stock INT NOT NULL
+)
+GO
+
+CREATE TABLE Usuario (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Email VARCHAR(150) NOT NULL,
+    Clave VARCHAR(255) NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1
+)
+GO
+
+CREATE TABLE Cliente (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Apellido VARCHAR(100) NOT NULL,
+    DNI VARCHAR(20) NULL,
+    Calle VARCHAR(150) NULL,
+    Nro INT NULL,
+    Email VARCHAR(100) NULL,
+    Telefono VARCHAR(50) NOT NULL,
+    IdLocalidad INT NULL
+)
+GO
+
+CREATE TABLE Bicicleta (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    IdCliente INT NOT NULL,
+    IdMarca INT NOT NULL,
+    IdModelo INT NOT NULL, 
+    IdTipoRueda INT NOT NULL 
+)
+GO
+
+CREATE TABLE OrdenService (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    IdBicicleta INT NOT NULL,
+    FechaRecepcion DATETIME NOT NULL,
+    Motivo VARCHAR(255) NOT NULL,
+    TotalGeneral DECIMAL(18,2) NOT NULL 
+)
+GO
+
+CREATE TABLE HistorialEstado (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    IdOrdenService INT NOT NULL,
+    IdEstado INT NOT NULL,
+    Fecha DATETIME NOT NULL
+)
+GO
+
+CREATE TABLE RepuestoUsado (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    IdOrdenService INT NOT NULL,
+    IdRepuesto INT NOT NULL,
+    Cantidad INT NOT NULL,
+    PrecioUnitario DECIMAL(18,2) NOT NULL
+)
+GO
+
+CREATE TABLE Servicio (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    IdOrdenService INT NOT NULL, 
+    IdTipoServicio INT NOT NULL,
+    Cantidad INT NOT NULL DEFAULT 1,
+    Costo DECIMAL(18,2) NOT NULL 
+)
+GO

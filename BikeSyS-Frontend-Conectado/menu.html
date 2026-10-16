@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inicio | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>renderLayout('Inicio');</script>
+
+    <div class="welcome">
+        <h2>Panel de Control - Bike Shop & Service 🚲</h2>
+        <p>Resumen operativo del taller en tiempo real.</p>
+    </div>
+
+    <div id="mensaje" class="login-error"></div>
+
+    <div class="metrics">
+        <div class="metric">
+            <div class="label">ÓRDENES PENDIENTES</div>
+            <div class="value" id="mPendientes">—</div>
+            <div class="sub">En taller (ingreso o reparación)</div>
+        </div>
+        <div class="metric">
+            <div class="label">TOTAL ÓRDENES</div>
+            <div class="value" id="mOrdenes">—</div>
+            <div class="sub">Histórico registrado</div>
+        </div>
+        <div class="metric">
+            <div class="label">CLIENTES</div>
+            <div class="value" id="mClientes">—</div>
+            <div class="sub">Clientes activos</div>
+        </div>
+        <div class="metric">
+            <div class="label">REPUESTOS</div>
+            <div class="value" id="mRepuestos">—</div>
+            <div class="sub">Ítems en catálogo</div>
+        </div>
+    </div>
+
+    <div class="grid2">
+        <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <h3 style="margin:0">🔧 Órdenes Pendientes en Taller</h3>
+                <a href="taller.html" class="btn small primary" style="text-decoration:none">Ir al Taller</a>
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Cliente / Bicicleta</th>
+                            <th>Ingreso</th>
+                            <th>Motivo</th>
+                            <th>Estado Actual</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPendientes"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h3>⚠️ Alertas de Stock Bajo</h3>
+                <div id="alertasStock" class="helper">Cargando inventario...</div>
+            </div>
+
+            <div class="panel">
+                <h3>Accesos Rápidos</h3>
+                <div class="quick" id="accesosRapidos">
+                    <a href="taller.html"><span class="ico">🔧</span>Órdenes de Taller</a>
+                    <a href="clientes.html"><span class="ico">👥</span>Clientes</a>
+                    <a href="productos.html"><span class="ico">📦</span>Stock Repuestos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (esAdmin()) {
+            document.getElementById('accesosRapidos').innerHTML += `
+                <a href="carga.html"><span class="ico">⚙️</span>Carga y Admin</a>
+            `;
+        }
+
+        function badgeEstado(nombre) {
+            const n = (nombre || '').toLowerCase();
+            if (n.includes('entregad') || n.includes('finaliz')) return `<span class="badge success">${esc(nombre)}</span>`;
+            if (n.includes('repara') || n.includes('proces')) return `<span class="badge info">${esc(nombre)}</span>`;
+            return `<span class="badge warning">${esc(nombre || 'Ingresado')}</span>`;
+        }
+
+        async function cargarDashboard() {
+            try {
+                const [clientes, ordenes, repuestos, bicis, estados, historiales] = await Promise.all([
+                    apiFetch('/Clientes'),
+                    apiFetch('/OrdenesService'),
+                    apiFetch('/Repuestos'),
+                    apiFetch('/Bicicletas'),
+                    apiFetch('/Estados').catch(() => []),
+                    apiFetch('/HistorialesEstado').catch(() => [])
+                ]);
+
+                // Mapear el último estado de cada orden
+                const mapaEstados = {};
+                estados.forEach(e => { mapaEstados[e.id] = e.nombre; });
+
+                const ultimoEstadoPorOrden = {};
+                historiales.forEach(h => {
+                    const actual = ultimoEstadoPorOrden[h.idOrdenService];
+                    if (!actual || h.id > actual.id) {
+                        ultimoEstadoPorOrden[h.idOrdenService] = h;
+                    }
+                });
+
+                const ordenesConEstado = ordenes.map(o => {
+                    const hist = ultimoEstadoPorOrden[o.id];
+                    const nombreEstado = hist ? (mapaEstados[hist.idEstado] || `Estado #${hist.idEstado}`) : 'Ingresado';
+                    const bici = bicis.find(b => b.id === o.idBicicleta);
+                    const cli = bici ? clientes.find(c => c.id === bici.idCliente) : null;
+                    const descCliente = cli ? `${cli.nombre} ${cli.apellido}` : `Bicicleta #${o.idBicicleta}`;
+                    return { ...o, nombreEstado, descCliente };
+                });
+
+                // Filtrar órdenes pendientes (que no estén entregadas ni finalizadas)
+                const pendientes = ordenesConEstado.filter(o => {
+                    const est = o.nombreEstado.toLowerCase();
+                    return !est.includes('entregad') && !est.includes('finaliz');
+                });
+
+                document.getElementById('mPendientes').textContent = pendientes.length;
+                document.getElementById('mOrdenes').textContent = ordenes.length;
+                document.getElementById('mClientes').textContent = clientes.length;
+                document.getElementById('mRepuestos').textContent = repuestos.length;
+
+                const tbody = document.getElementById('tablaPendientes');
+                if (pendientes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay órdenes pendientes en este momento.</td></tr>';
+                } else {
+                    tbody.innerHTML = pendientes.slice().reverse().map(o => `
+                        <tr>
+                            <td><b>#${o.id}</b></td>
+                            <td>${esc(o.descCliente)} <small>(Bici #${o.idBicicleta})</small></td>
+                            <td>${fmtDate(o.fechaRecepcion)}</td>
+                            <td>${esc(o.motivo)}</td>
+                            <td>${badgeEstado(o.nombreEstado)}</td>
+                            <td><b>${money(o.totalGeneral)}</b></td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Alertas de stock bajo (<= 5 unidades)
+                const bajoStock = repuestos.filter(r => r.stock <= 5);
+                const divStock = document.getElementById('alertasStock');
+                if (bajoStock.length === 0) {
+                    divStock.innerHTML = '<div class="empty" style="padding:10px">Todo el inventario tiene stock saludable.</div>';
+                } else {
+                    divStock.innerHTML = bajoStock.map(r => `
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee">
+                            <span><b>${esc(r.nombre)}</b></span>
+                            <span class="badge danger">Quedan ${r.stock} u.</span>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                document.getElementById('mensaje').textContent = error.message;
+            }
+        }
+
+        cargarDashboard();
+    </script>
+    <script>document.write(endLayout());</script>
+</body>
+</html>

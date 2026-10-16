@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clientes y Bicicletas | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>renderLayout('Clientes y Bicicletas');</script>
+
+    <div class="toolbar">
+        <div>
+            <b>Gestión de Clientes y sus Bicicletas</b>
+            <div class="helper">Buscá un cliente para ver sus datos o administrar todas las bicicletas de su grupo familiar.</div>
+        </div>
+        <div class="left">
+            <input class="input" id="buscar" placeholder="Buscar por nombre, DNI o teléfono..." style="width:260px">
+        </div>
+        <div class="right">
+            <button class="btn primary" onclick="nuevoCliente()">+ Nuevo Cliente</button>
+        </div>
+    </div>
+
+    <div id="mensaje" class="login-error"></div>
+
+    <div class="panel table-panel">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre y Apellido</th>
+                        <th>DNI</th>
+                        <th>Teléfono</th>
+                        <th>Provincia / Localidad</th>
+                        <th>Bicicletas del Cliente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Crear / Editar Cliente -->
+    <div class="modal" id="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="modalTitulo">Nuevo Cliente</h3>
+                <button class="close" onclick="closeModal('modal')">×</button>
+            </div>
+            <form id="formCliente">
+                <input type="hidden" id="id">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Nombre *</label>
+                        <input class="input" id="nombre" required maxlength="100" placeholder="Ej. Juan">
+                    </div>
+                    <div class="field">
+                        <label>Apellido *</label>
+                        <input class="input" id="apellido" required maxlength="100" placeholder="Ej. Pérez">
+                    </div>
+                    <div class="field">
+                        <label>DNI</label>
+                        <input class="input" id="dni" maxlength="20" placeholder="Sin puntos">
+                    </div>
+                    <div class="field">
+                        <label>Teléfono *</label>
+                        <input class="input" id="telefono" required maxlength="50" placeholder="Ej. 3511234567">
+                    </div>
+                    <div class="field full">
+                        <label>Email</label>
+                        <input class="input" id="email" type="email" maxlength="100" placeholder="cliente@correo.com">
+                    </div>
+                    <div class="field">
+                        <label>1. Provincia</label>
+                        <select class="select" id="idProvincia" onchange="filtrarLocalidadesPorProvincia()">
+                            <option value="">-- Seleccionar Provincia --</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>2. Localidad</label>
+                        <select class="select" id="idLocalidad">
+                            <option value="">-- Primero elegí una provincia --</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Calle</label>
+                        <input class="input" id="calle" maxlength="150" placeholder="Nombre de la calle">
+                    </div>
+                    <div class="field">
+                        <label>Número / Altura</label>
+                        <input class="input" id="nro" type="number" min="0" placeholder="Ej. 123">
+                    </div>
+                </div>
+                <div id="formError" class="login-error"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn light" onclick="closeModal('modal')">Cancelar</button>
+                    <button type="submit" class="btn primary" id="saveBtn">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Bicicletas del Cliente -->
+    <div class="modal" id="modalBicisCliente">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="tituloBicisCliente">🚲 Bicicletas del Cliente</h3>
+                <button class="close" onclick="closeModal('modalBicisCliente')">×</button>
+            </div>
+
+            <div class="table-wrap" style="margin-bottom:16px">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID Bici</th>
+                            <th>Marca</th>
+                            <th>Modelo / Tipo</th>
+                            <th>Rodado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyBicisDelCliente"></tbody>
+                </table>
+            </div>
+
+            <div class="sub-box">
+                <h4>+ Registrar Nueva Bicicleta para este Cliente</h4>
+                <form id="formNuevaBiciCliente">
+                    <input type="hidden" id="biciIdCliente">
+                    <div class="form-grid three">
+                        <div class="field">
+                            <label>Marca *</label>
+                            <select class="select" id="biciMarca" required></select>
+                        </div>
+                        <div class="field">
+                            <label>Modelo / Tipo *</label>
+                            <select class="select" id="biciModelo" required></select>
+                        </div>
+                        <div class="field">
+                            <label>Rodado *</label>
+                            <select class="select" id="biciRueda" required></select>
+                        </div>
+                    </div>
+                    <div id="biciError" class="login-error"></div>
+                    <div class="form-actions" style="margin-top:10px">
+                        <button type="button" class="btn light" onclick="closeModal('modalBicisCliente')">Cerrar</button>
+                        <button type="submit" class="btn primary" id="btnGuardarBici">+ Agregar Bicicleta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clientes = [];
+        let localidades = [];
+        let provincias = [];
+        let bicicletas = [];
+        let marcas = [];
+        let modelos = [];
+        let ruedas = [];
+
+        function mostrarMensaje(texto) {
+            document.getElementById('mensaje').textContent = texto || '';
+        }
+
+        async function cargarDatos() {
+            try {
+                [clientes, localidades, provincias, bicicletas, marcas, modelos, ruedas] = await Promise.all([
+                    apiFetch('/Clientes'),
+                    apiFetch('/Localidades').catch(() => []),
+                    apiFetch('/Provincias').catch(() => []),
+                    apiFetch('/Bicicletas').catch(() => []),
+                    apiFetch('/Marcas').catch(() => []),
+                    apiFetch('/Modelos').catch(() => []),
+                    apiFetch('/TiposRueda').catch(() => [])
+                ]);
+
+                poblarSelectores();
+                renderizarTabla();
+                mostrarMensaje('');
+            } catch (error) {
+                mostrarMensaje(error.message);
+            }
+        }
+
+        function poblarSelectores() {
+            const selectProv = document.getElementById('idProvincia');
+            selectProv.innerHTML = '<option value="">-- Seleccionar Provincia --</option>' +
+                provincias.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+
+            document.getElementById('biciMarca').innerHTML = marcas.length
+                ? marcas.map(m => `<option value="${m.id}">${esc(m.nombre)}</option>`).join('')
+                : '<option value="">Sin marcas</option>';
+
+            document.getElementById('biciModelo').innerHTML = modelos.length
+                ? modelos.map(m => `<option value="${m.id}">${esc(m.tipoModelo)}</option>`).join('')
+                : '<option value="">Sin modelos</option>';
+
+            document.getElementById('biciRueda').innerHTML = ruedas.length
+                ? ruedas.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('')
+                : '<option value="">Sin rodados</option>';
+        }
+
+        function filtrarLocalidadesPorProvincia(idLocalidadSeleccionada = null) {
+            const idProv = Number(document.getElementById('idProvincia').value);
+            const selectLoc = document.getElementById('idLocalidad');
+
+            if (!idProv) {
+                selectLoc.innerHTML = '<option value="">-- Primero elegí una provincia --</option>';
+                return;
+            }
+
+            const locsDeProvincia = localidades.filter(l => l.idProvincia === idProv);
+            if (locsDeProvincia.length === 0) {
+                selectLoc.innerHTML = '<option value="">-- Sin localidades en esta provincia --</option>';
+                return;
+            }
+
+            selectLoc.innerHTML = '<option value="">-- Seleccionar Localidad --</option>' +
+                locsDeProvincia.map(loc => `
+                    <option value="${loc.id}" ${loc.id === idLocalidadSeleccionada ? 'selected' : ''}>
+                        ${esc(loc.nombre)}
+                    </option>
+                `).join('');
+        }
+
+        function obtenerTextoUbicacion(idLoc) {
+            if (!idLoc) return '-';
+            const loc = localidades.find(l => l.id === idLoc);
+            if (!loc) return `Loc. #${idLoc}`;
+            const prov = provincias.find(p => p.id === loc.idProvincia);
+            return prov ? `${loc.nombre} (${prov.nombre})` : loc.nombre;
+        }
+
+        function renderizarTabla() {
+            const filtro = document.getElementById('buscar').value.toLowerCase();
+            const tbody = document.getElementById('tbody');
+
+            const filtrados = clientes.filter(c => {
+                const texto = `${c.nombre || ''} ${c.apellido || ''} ${c.dni || c.DNI || ''} ${c.email || ''} ${c.telefono || ''}`.toLowerCase();
+                return texto.includes(filtro);
+            });
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty">No se encontraron clientes registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtrados.map(c => {
+                const dniValor = c.dni || c.DNI || '-';
+                const cantBicis = bicicletas.filter(b => b.idCliente === c.id).length;
+
+                return `
+                    <tr>
+                        <td>#${c.id}</td>
+                        <td><b>${esc(c.nombre)} ${esc(c.apellido)}</b></td>
+                        <td>${esc(dniValor)}</td>
+                        <td>${esc(c.telefono)}</td>
+                        <td>${esc(obtenerTextoUbicacion(c.idLocalidad))}</td>
+                        <td>
+                            <button class="btn small ${cantBicis > 0 ? 'primary' : 'light'}" onclick="verBicicletasCliente(${c.id})">
+                                🚲 Bicicletas (${cantBicis})
+                            </button>
+                        </td>
+                        <td>
+                            <button class="btn small" onclick="editarCliente(${c.id})">Editar</button>
+                            <button class="btn small danger" onclick="eliminarCliente(${c.id})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function verBicicletasCliente(idCliente) {
+            const cli = clientes.find(c => c.id === idCliente);
+            if (!cli) return;
+
+            document.getElementById('biciIdCliente').value = cli.id;
+            document.getElementById('biciError').textContent = '';
+            document.getElementById('tituloBicisCliente').textContent = `🚲 Bicicletas de ${cli.nombre} ${cli.apellido}`;
+
+            renderizarBicisDelModal(cli.id);
+            openModal('modalBicisCliente');
+        }
+
+        function renderizarBicisDelModal(idCliente) {
+            const lista = bicicletas.filter(b => b.idCliente === idCliente);
+            const tbody = document.getElementById('tbodyBicisDelCliente');
+
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">Este cliente todavía no tiene bicicletas registradas.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(b => {
+                const mar = marcas.find(m => m.id === b.idMarca)?.nombre || `Marca #${b.idMarca}`;
+                const mod = modelos.find(m => m.id === b.idModelo)?.tipoModelo || `Modelo #${b.idModelo}`;
+                const rue = ruedas.find(r => r.id === b.idTipoRueda)?.nombre || `Rodado #${b.idTipoRueda}`;
+
+                return `
+                    <tr>
+                        <td><b>#${b.id}</b></td>
+                        <td>${esc(mar)}</td>
+                        <td>${esc(mod)}</td>
+                        <td><span class="badge info">${esc(rue)}</span></td>
+                        <td>
+                            <button class="btn small danger" onclick="eliminarBicicleta(${b.id}, ${idCliente})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('formNuevaBiciCliente').onsubmit = async (e) => {
+            e.preventDefault();
+            const idCliente = Number(document.getElementById('biciIdCliente').value);
+            const err = document.getElementById('biciError');
+            const btn = document.getElementById('btnGuardarBici');
+            err.textContent = '';
+            btn.disabled = true;
+
+            try {
+                await apiFetch('/Bicicletas', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        idCliente,
+                        idMarca: Number(document.getElementById('biciMarca').value),
+                        idModelo: Number(document.getElementById('biciModelo').value),
+                        idTipoRueda: Number(document.getElementById('biciRueda').value)
+                    })
+                });
+                bicicletas = await apiFetch('/Bicicletas').catch(() => []);
+                renderizarBicisDelModal(idCliente);
+                renderizarTabla();
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        async function eliminarBicicleta(idBici, idCliente) {
+            if (!confirm(`¿Eliminar la bicicleta #${idBici}?`)) return;
+            try {
+                await apiFetch(`/Bicicletas/${idBici}`, { method: 'DELETE' });
+                bicicletas = await apiFetch('/Bicicletas').catch(() => []);
+                renderizarBicisDelModal(idCliente);
+                renderizarTabla();
+            } catch (ex) {
+                document.getElementById('biciError').textContent = ex.message;
+            }
+        }
+
+        function nuevoCliente() {
+            document.getElementById('formCliente').reset();
+            document.getElementById('id').value = '';
+            document.getElementById('formError').textContent = '';
+            document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
+
+            // Preseleccionar Córdoba por defecto si existe
+            const cordoba = provincias.find(p =>
+                p.nombre.toLowerCase().includes('córdoba') || p.nombre.toLowerCase().includes('cordoba')
+            );
+            document.getElementById('idProvincia').value = cordoba ? cordoba.id : '';
+            filtrarLocalidadesPorProvincia();
+
+            openModal('modal');
+        }
+
+        function editarCliente(idCliente) {
+            const c = clientes.find(x => x.id === idCliente);
+            if (!c) return;
+
+            document.getElementById('id').value = c.id;
+            document.getElementById('nombre').value = c.nombre || '';
+            document.getElementById('apellido').value = c.apellido || '';
+            document.getElementById('dni').value = c.dni || c.DNI || '';
+            document.getElementById('telefono').value = c.telefono || '';
+            document.getElementById('email').value = c.email || '';
+            document.getElementById('calle').value = c.calle || '';
+            document.getElementById('nro').value = c.nro ?? '';
+
+            // Buscar a qué provincia pertenece la localidad del cliente
+            const loc = localidades.find(l => l.id === c.idLocalidad);
+            document.getElementById('idProvincia').value = loc ? loc.idProvincia : '';
+            filtrarLocalidadesPorProvincia(c.idLocalidad);
+
+            document.getElementById('formError').textContent = '';
+            document.getElementById('modalTitulo').textContent = `Editar Cliente #${c.id}`;
+            openModal('modal');
+        }
+
+        async function eliminarCliente(idCliente) {
+            if (!confirm('¿Estás seguro de que deseás eliminar este cliente?')) return;
+            try {
+                await apiFetch(`/Clientes/${idCliente}`, { method: 'DELETE' });
+                await cargarDatos();
+            } catch (error) {
+                mostrarMensaje(error.message);
+            }
+        }
+
+        document.getElementById('formCliente').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            const err = document.getElementById('formError');
+            btn.disabled = true;
+            err.textContent = '';
+
+            const idVal = document.getElementById('id').value;
+            const nroVal = document.getElementById('nro').value;
+            const locVal = document.getElementById('idLocalidad').value;
+
+            const dto = {
+                nombre: document.getElementById('nombre').value.trim(),
+                apellido: document.getElementById('apellido').value.trim(),
+                dni: document.getElementById('dni').value.trim() || null,
+                calle: document.getElementById('calle').value.trim() || null,
+                nro: nroVal ? Number(nroVal) : null,
+                email: document.getElementById('email').value.trim() || null,
+                telefono: document.getElementById('telefono').value.trim(),
+                idLocalidad: locVal ? Number(locVal) : null
+            };
+
+            try {
+                if (idVal) {
+                    await apiFetch(`/Clientes/${idVal}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(dto)
+                    });
+                } else {
+                    await apiFetch('/Clientes', {
+                        method: 'POST',
+                        body: JSON.stringify(dto)
+                    });
+                }
+                closeModal('modal');
+                await cargarDatos();
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        document.getElementById('buscar').oninput = renderizarTabla;
+        cargarDatos();
+    </script>
+    <script>document.write(endLayout());</script>
+</body>
+</html>

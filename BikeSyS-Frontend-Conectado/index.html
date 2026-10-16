@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Acceso | Bike Shop & Service</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-box">
+            <img src="img/logo.jpg" alt="Logo Bike Shop & Service">
+            <h1>Bike Shop & Service</h1>
+            <p>Sistema de Gestión Integral</p>
+
+            <form id="loginForm">
+                <div class="field">
+                    <label>Email</label>
+                    <input class="input" id="email" type="email" required placeholder="admin@test.com">
+                </div>
+                <div class="field">
+                    <label>Contraseña</label>
+                    <input class="input" id="clave" type="password" required placeholder="Ingrese su contraseña">
+                </div>
+                <div class="login-error" id="error"></div>
+                <button class="btn primary" id="submitBtn" style="width:100%;margin-top:8px">
+                    Ingresar al Sistema
+                </button>
+            </form>
+
+            <div class="login-note">
+                Si ingresás con una cuenta de administrador (ej. <b>admin@test.com</b>), se habilitará el módulo de Carga y Usuarios.
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (getToken()) {
+            window.location.href = 'menu.html';
+        }
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const err = document.getElementById('error');
+
+            btn.disabled = true;
+            btn.textContent = 'Verificando credenciales...';
+            err.textContent = '';
+
+            try {
+                const email = document.getElementById('email').value.trim();
+                const clave = document.getElementById('clave').value;
+                await apiLogin(email, clave);
+                window.location.href = 'menu.html';
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Ingresar al Sistema';
+            }
+        };
+    </script>
+</body>
+</html>
