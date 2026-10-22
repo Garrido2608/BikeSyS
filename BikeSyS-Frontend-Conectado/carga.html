@@ -287,7 +287,8 @@
                     method: 'PUT',
                     body: JSON.stringify({
                         email: u.email,
-                        activo: nuevoEstadoActivo
+                        activo: nuevoEstadoActivo,
+                        idRol: u.idRol || 2,
                     })
                 });
                 await renderizarConfiguracionTab();
