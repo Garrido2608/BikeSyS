@@ -3,7 +3,9 @@ const API_BASE = 'https://localhost:7235/api';
 // const API_BASE = 'http://localhost:5044/api'; // Descomentar si se ejecuta con perfil HTTP
 
 function getToken() {
-    return localStorage.getItem('bikeSysToken') || '';
+    
+    // pero ahora verifica si hay un email en sesión 
+    return localStorage.getItem('bikeSysEmail') || '';
 }
 
 function getEmailUsuario() {
@@ -15,8 +17,7 @@ function esAdmin() {
     return email.includes('admin');
 }
 
-function guardarSesion(token, email) {
-    localStorage.setItem('bikeSysToken', token);
+function guardarSesion(email) {
     localStorage.setItem('bikeSysEmail', email || '');
 }
 
@@ -32,11 +33,6 @@ async function apiFetch(endpoint, options = {}) {
         ...(options.headers || {})
     };
 
-    const token = getToken();
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
     let response;
     try {
         response = await fetch(`${API_BASE}${endpoint}`, {
@@ -51,11 +47,11 @@ async function apiFetch(endpoint, options = {}) {
 
     if (response.status === 401) {
         const errorText = await response.text();
-        localStorage.removeItem('bikeSysToken');
+        localStorage.removeItem('bikeSysEmail');
         if (!window.location.pathname.endsWith('index.html')) {
             window.location.href = 'index.html';
         }
-        throw new Error(errorText || 'Sesión expirada o credenciales inválidas.');
+        throw new Error(errorText || 'Credenciales inválidas.');
     }
 
     if (!response.ok) {
@@ -83,17 +79,13 @@ async function apiLogin(email, clave) {
         body: JSON.stringify({ email, clave })
     });
 
-    const token = result?.token || result?.Token || '';
-    if (!token) {
-        throw new Error('La API no devolvió un token de sesión válido.');
-    }
-
-    guardarSesion(token, email);
+   
+    guardarSesion(email);
     return result;
 }
 
 function requireApiLogin() {
-    if (!getToken()) {
+    if (!getEmailUsuario()) {
         window.location.href = 'index.html';
     }
 }
