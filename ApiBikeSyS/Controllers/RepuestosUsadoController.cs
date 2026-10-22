@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class RepuestosUsadoController : ControllerBase
@@ -32,7 +32,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(item);
         }
 
-        // Endpoint para ver los repuestos usados en una Orden específica
+        //  para ver los repuestos usados en una Orden específica
         [HttpGet("orden/{idOrdenService}")]
         public async Task<ActionResult<List<RepuestoUsadoDTO>>> ObtenerPorOrden(int idOrdenService)
         {

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class BicicletasController : ControllerBase
@@ -32,7 +32,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(bicicleta);
         }
 
-        // Endpoint clave para el combo en cascada del Frontend:
+        
         // GET: api/Bicicletas/cliente/5
         [HttpGet("cliente/{idCliente}")]
         public async Task<ActionResult<List<BicicletaDTO>>> ObtenerPorCliente(int idCliente)

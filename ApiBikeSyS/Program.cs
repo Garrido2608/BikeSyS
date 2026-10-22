@@ -16,7 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-//  Configuración de Swagger con soporte para JWT (Bearer)
+
+/*
+//  Configuración de Swagger con soporte para JWT 
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -44,7 +46,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-//  Configuración de Autenticación JWT
+//  Configuración de Autenticación JWT 
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -59,6 +62,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
+            */
 
 //  Configuración de CORS para el Frontend
 builder.Services.AddCors(options =>
@@ -137,8 +141,8 @@ app.UseHttpsRedirection();
 
 app.UseCors("PermitirFrontend");
 
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 

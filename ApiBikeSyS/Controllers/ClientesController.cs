@@ -5,14 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize] // <--- Escudo JWT: Exige token para entrar
+   
     [Route("api/[controller]")]
     [ApiController]
     public class ClientesController : ControllerBase
     {
         private readonly IClienteService _service;
 
-        // Inyectamos únicamente el Service
+     
         public ClientesController(IClienteService service)
         {
             _service = service;

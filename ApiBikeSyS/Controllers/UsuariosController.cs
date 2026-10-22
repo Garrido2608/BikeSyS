@@ -1,11 +1,6 @@
 ﻿using ApiBikeSyS.DTOs.Usuario;
 using ApiBikeSyS.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace ApiBikeSyS.Controllers
 {
@@ -14,15 +9,13 @@ namespace ApiBikeSyS.Controllers
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _service;
-        private readonly IConfiguration _config;
 
-        public UsuariosController(IUsuarioService service, IConfiguration config)
+        public UsuariosController(IUsuarioService service)
         {
             _service = service;
-            _config = config;
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<UsuarioDTO>>> ObtenerTodos()
         {
@@ -30,7 +23,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(usuarios);
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<UsuarioDTO>> ObtenerPorId(int id)
         {
@@ -54,7 +47,7 @@ namespace ApiBikeSyS.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponseDTO>> Login(LoginDTO dto)
+        public async Task<ActionResult> Login(LoginDTO dto)
         {
             var usuario = await _service.Login(dto.Email, dto.Clave);
 
@@ -63,30 +56,15 @@ namespace ApiBikeSyS.Controllers
                 return Unauthorized("Email o contraseña incorrectos.");
             }
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
+          
+            return Ok(new
             {
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                new Claim(ClaimTypes.Email, usuario.Email)
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: credentials);
-
-            return Ok(new TokenResponseDTO
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Mensaje = "Login exitoso"
+                Mensaje = "Login exitoso",
+                Usuario = usuario
             });
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpPut("{id}")]
         public async Task<ActionResult> Actualizar(int id, ActualizarUsuarioDTO dto)
         {
@@ -102,7 +80,7 @@ namespace ApiBikeSyS.Controllers
             }
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Eliminar(int id)
         {

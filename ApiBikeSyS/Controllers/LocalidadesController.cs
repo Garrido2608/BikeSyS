@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class LocalidadesController : ControllerBase
@@ -32,7 +32,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(localidad);
         }
 
-        // Endpoint para el combo en cascada del Frontend (Provincia -> Localidad)
+        // para el combo en cascada del Frontend (Provincia -> Localidad)
         [HttpGet("provincia/{idProvincia}")]
         public async Task<ActionResult<List<LocalidadDTO>>> ObtenerPorProvincia(int idProvincia)
         {

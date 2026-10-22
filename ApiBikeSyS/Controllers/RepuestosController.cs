@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+   // [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RepuestosController : ControllerBase

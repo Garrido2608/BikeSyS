@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+   
     [Route("api/[controller]")]
     [ApiController]
     public class HistorialesEstadoController : ControllerBase
@@ -32,7 +32,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(historial);
         }
 
-        // Endpoint para ver el historial de estados de una Orden específica
+        // para ver el historial de estados de una Orden específica
         [HttpGet("orden/{idOrdenService}")]
         public async Task<ActionResult<List<HistorialEstadoDTO>>> ObtenerPorOrden(int idOrdenService)
         {

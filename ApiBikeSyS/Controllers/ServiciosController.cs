@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiBikeSyS.Controllers
 {
-    [Authorize]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class ServiciosController : ControllerBase
@@ -32,7 +32,7 @@ namespace ApiBikeSyS.Controllers
             return Ok(item);
         }
 
-        // Endpoint para ver los servicios realizados en una Orden específica
+        //  para ver los servicios realizados en una Orden específica
         [HttpGet("orden/{idOrdenService}")]
         public async Task<ActionResult<List<ServicioDTO>>> ObtenerPorOrden(int idOrdenService)
         {
