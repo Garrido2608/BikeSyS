@@ -17,6 +17,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 /*
 //  Configuración de Swagger con soporte para JWT 
 builder.Services.AddSwaggerGen(c =>
