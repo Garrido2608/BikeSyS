@@ -12,11 +12,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Controladores y Explorador de Endpoints
+//  Controladores y Explorador de Endpoints
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// 2. Configuración de Swagger con soporte para JWT (Bearer)
+//  Configuración de Swagger con soporte para JWT (Bearer)
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -44,7 +44,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// 3. Configuración de Autenticación JWT
+//  Configuración de Autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -60,7 +60,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 4. Configuración de CORS para el Frontend
+//  Configuración de CORS para el Frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFrontend", policy =>
@@ -71,14 +71,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Configuración de Entity Framework Core (SQL Server)
+//  Configuración de Entity Framework Core (SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSQL")));
 
-// 6. Configuración de AutoMapper
+//  Configuración de AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// 7. Inyección de Dependencias (Las 15 entidades de BikeSys)
+//  Inyección de Dependencias entidades
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
@@ -126,7 +126,7 @@ builder.Services.AddScoped<IServicioService, ServicioService>();
 
 var app = builder.Build();
 
-// 8. Pipeline de peticiones HTTP
+// Pipeline de peticiones HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

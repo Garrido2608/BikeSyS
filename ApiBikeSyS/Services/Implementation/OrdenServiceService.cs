@@ -45,7 +45,7 @@ namespace ApiBikeSyS.Services.Implementation
 
             var ordenCreada = await _repository.Crear(orden);
 
-            // Regla de negocio: Registrar automáticamente el Estado Inicial (IdEstado = 1)
+            //  Registrar automáticamente el Estado Inicial ; 1
             var estadoInicial = new HistorialEstado
             {
                 IdOrdenService = ordenCreada.Id,
