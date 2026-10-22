@@ -296,7 +296,7 @@
             }
         }
 
-        document.getElementById('formCarga').onsubmit = async (e) => {
+document.getElementById('formCarga').onsubmit = async (e) => {
             e.preventDefault();
             const err = document.getElementById('errorCarga');
             err.textContent = '';
@@ -305,17 +305,10 @@
                 if (tabActual === 'usuarios') {
                     const email = document.getElementById('cEmail').value.trim();
                     const clave = document.getElementById('cClave').value;
-                    try {
-                        await apiFetch('/Usuarios/registrar', {
-                            method: 'POST',
-                            body: JSON.stringify({ email, clave })
-                        });
-                    } catch {
-                        await apiFetch('/Usuarios', {
-                            method: 'POST',
-                            body: JSON.stringify({ email, clave })
-                        });
-                    }
+                    await apiFetch('/Usuarios/registrar', {
+                        method: 'POST',
+                        body: JSON.stringify({ email, clave })
+                    });
                 }
                 else if (tabActual === 'marcas') {
                     await apiFetch('/Marcas', {
@@ -391,6 +384,7 @@
             }
         };
 
+       
         async function eliminarItem(urlPlural, urlSingular) {
             if (!confirm('¿Estás seguro de que deseás eliminar este registro?')) return;
             try {

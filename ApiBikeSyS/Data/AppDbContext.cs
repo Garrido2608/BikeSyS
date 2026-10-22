@@ -38,6 +38,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<RepuestoUsado> RepuestoUsado { get; set; }
 
+    public virtual DbSet<Rol> Rol { get; set; }
+
     public virtual DbSet<Servicio> Servicio { get; set; }
 
     public virtual DbSet<TipoRueda> TipoRueda { get; set; }
@@ -86,6 +88,15 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Estado__3214EC073BB8FFEF");
 
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Rol>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Rol");
             entity.Property(e => e.Nombre)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -200,6 +211,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(150)
                 .IsUnicode(false);
+            entity.Property(e => e.IdRol).HasDefaultValue(2);
         });
 
         OnModelCreatingPartial(modelBuilder);

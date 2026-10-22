@@ -40,6 +40,7 @@ namespace ApiBikeSyS.Services.Implementation
 
             var usuario = _mapper.Map<Usuario>(dto);
             usuario.Activo = true;
+            usuario.IdRol = 2;
 
             var creado = await _repository.Crear(usuario);
             return _mapper.Map<UsuarioDTO>(creado);
@@ -63,7 +64,16 @@ namespace ApiBikeSyS.Services.Implementation
                 throw new Exception("El email ya pertenece a otro usuario.");
             }
 
+            int rolAnterior = usuario.IdRol;
+
             _mapper.Map(dto, usuario);
+
+            // Si desde el front no enviaron IdRol conserva el rol que tenía
+            if (dto.IdRol <= 0)
+            {
+                usuario.IdRol = rolAnterior;
+            }
+
             return await _repository.Actualizar(usuario);
         }
 

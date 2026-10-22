@@ -9,8 +9,8 @@ namespace ApiBikeSyS.DTOs.Usuario
         [StringLength(150)]
         public string Email { get; set; } = string.Empty;
 
-
-
         public bool Activo { get; set; } = true;
+        public int IdRol { get; set; }
+
     }
 }

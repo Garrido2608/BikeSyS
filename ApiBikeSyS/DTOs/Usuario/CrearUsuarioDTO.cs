@@ -10,7 +10,7 @@ namespace ApiBikeSyS.DTOs.Usuario
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
-        [StringLength(255, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 255 caracteres")]
+        [StringLength(255, MinimumLength = 4, ErrorMessage = "La contraseña debe tener entre 6 y 255 caracteres")]
         public string Clave { get; set; } = string.Empty;
     }
 }
