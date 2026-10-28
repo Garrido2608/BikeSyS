@@ -2,6 +2,21 @@ USE BikeSys;
 GO
 
 
+-- ROLES
+
+INSERT INTO Rol (Nombre) VALUES 
+('Admin'),
+('Empleado'),
+('Cliente');
+GO
+
+-- USUARIOS
+
+INSERT INTO Usuario (Email, Clave, Activo, IdRol) VALUES 
+('admin@test.com', '123456', 1, 1),
+('edu@empleado.com', '1234', 1, 2);
+GO
+
 -- ESTADOS
 
 INSERT INTO Estado (Nombre) VALUES 
@@ -41,16 +56,14 @@ GO
 
 -- LOCALIDADES
 
-DECLARE @IdCordoba INT = (SELECT TOP 1 Id FROM Provincia WHERE Nombre = 'Córdoba');
-
 INSERT INTO Localidad (Nombre, IdProvincia) VALUES 
-('Córdoba Capital', @IdCordoba),
-('Villa Allende', @IdCordoba),
-('La Calera', @IdCordoba),
-('Villa Carlos Paz', @IdCordoba),
-('Alta Gracia', @IdCordoba),
-('Río Ceballos', @IdCordoba),
-('Mendiolaza', @IdCordoba);
+('Córdoba Capital', 1),
+('Villa Allende', 1),
+('La Calera', 1),
+('Villa Carlos Paz', 1),
+('Alta Gracia', 1),
+('Río Ceballos', 1),
+('Mendiolaza', 1);
 GO
 
 
