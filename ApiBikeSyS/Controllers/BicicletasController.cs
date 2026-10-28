@@ -33,7 +33,7 @@ namespace ApiBikeSyS.Controllers
         }
 
         
-        // GET: api/Bicicletas/cliente/5
+        // GET: api/Bicicletas/cliente/
         [HttpGet("cliente/{idCliente}")]
         public async Task<ActionResult<List<BicicletaDTO>>> ObtenerPorCliente(int idCliente)
         {
